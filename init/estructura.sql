@@ -67,18 +67,22 @@ CREATE TABLE Venta (
 
 CREATE TABLE Documento (
 	filePath VARCHAR(100) PRIMARY KEY,
+	descripcion TINYTEXT NOT NULL DEFAULT "",
+	visible BOOLEAN NOT NULL DEFAULT FALSE,
 	FOREIGN KEY (filePath) REFERENCES Archivo(filePath)
 );
 
 CREATE TABLE Sueldo (
 	filePath VARCHAR(100) PRIMARY KEY,
-	FOREIGN KEY (filePath) REFERENCES Archivo(filePath)
+	recipiente BIGINT(255) NOT NULL,
+	FOREIGN KEY (filePath) REFERENCES Archivo(filePath),
+	FOREIGN KEY (recipiente) REFERENCES Usuario(cedula)
 );
 
 CREATE TABLE Producto (
 	id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
 	nombre VARCHAR(100) NOT NULL,
-	descripcion TINYTEXT NOT NULL,
+	descripcion TINYTEXT NOT NULL DEFAULT "",
 	stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
 	precio FLOAT(2)
 );
@@ -114,7 +118,7 @@ CREATE TABLE LineaOrden (
 CREATE TABLE Evento (
 	identificador INT PRIMARY KEY AUTO_INCREMENT,
 	creador BIGINT(255) NOT NULL,
-	descripcion TINYTEXT NOT NULL,
+	descripcion TINYTEXT NOT NULL DEFAULT "",
 	fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 	FOREIGN KEY (creador) REFERENCES Usuario(cedula)
 );
