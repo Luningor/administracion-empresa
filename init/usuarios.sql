@@ -39,6 +39,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON empresa.* TO empresa_admin;
 GRANT SELECT ON empresa.* TO empresa_analyst;
 
 -- // Initialize permission table
+USE empresa;
+
 INSERT INTO Permiso (nombre) VALUES ("USER_PERMISSION");
 INSERT INTO Permiso (nombre) VALUES ("FILE_PERMISSION");
 INSERT INTO Permiso (nombre) VALUES ("CONTACT_PERMISSION");

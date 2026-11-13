@@ -1,10 +1,10 @@
 <?php
 
-namespace LBBAS\app\controllers\controladorArchivos;
+namespace LBBAS\app\controllers;
 
 class controladorArchivos {
 	static private controladorArchivos $instance;
-	private array 					   $archivos;
+	private array 					   $archivos = [];
 
 	/// @Constructor
 	public function __construct() {}

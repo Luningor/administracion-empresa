@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\controladorOrdenes;
+namespace LBBAS\app\controllers;
 
 class controladorOrdenes {
 	static private controladorOrdenes $instance;

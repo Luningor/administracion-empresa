@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\factoryContactos;
+namespace LBBAS\app\controllers;
 
 class factoryContactos {
 	/// @Constructor

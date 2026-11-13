@@ -47,33 +47,33 @@ CREATE TABLE PropiedadRol (
 );
 
 CREATE TABLE Archivo (
-	filePath VARCHAR(100) PRIMARY KEY,
+	filePath VARCHAR(255) PRIMARY KEY,
 	creador BIGINT(255) NOT NULL,
 	nombre VARCHAR(100) UNIQUE,
 	FOREIGN KEY (creador) REFERENCES Usuario(cedula)
 );
 
 CREATE TABLE Compra (
-	filePath VARCHAR(100) PRIMARY KEY,
+	filePath VARCHAR(255) PRIMARY KEY,
 	compradoPor BIGINT(255) NOT NULL,
 	FOREIGN KEY (compradoPor) REFERENCES Usuario(cedula),
 	FOREIGN KEY (filePath)    REFERENCES Archivo(filePath)
 );
 
 CREATE TABLE Venta (
-	filePath VARCHAR(100) PRIMARY KEY,
+	filePath VARCHAR(255) PRIMARY KEY,
 	FOREIGN KEY (filePath) REFERENCES Archivo(filePath)
 );
 
 CREATE TABLE Documento (
-	filePath VARCHAR(100) PRIMARY KEY,
+	filePath VARCHAR(255) PRIMARY KEY,
 	descripcion TINYTEXT NOT NULL DEFAULT "",
 	visible BOOLEAN NOT NULL DEFAULT FALSE,
 	FOREIGN KEY (filePath) REFERENCES Archivo(filePath)
 );
 
 CREATE TABLE Sueldo (
-	filePath VARCHAR(100) PRIMARY KEY,
+	filePath VARCHAR(255) PRIMARY KEY,
 	recipiente BIGINT(255) NOT NULL,
 	FOREIGN KEY (filePath) REFERENCES Archivo(filePath),
 	FOREIGN KEY (recipiente) REFERENCES Usuario(cedula)
@@ -103,7 +103,7 @@ CREATE TABLE Cliente (
 CREATE TABLE Orden (
 	numeroOrden INT PRIMARY KEY AUTO_INCREMENT,
 	comprador VARCHAR(50) NOT NULL,
-	recibo VARCHAR(100) NOT NULL,
+	recibo VARCHAR(255) NOT NULL,
 	FOREIGN KEY (comprador) REFERENCES Cliente(alias),
 	FOREIGN KEY (recibo) 	REFERENCES Venta(filePath)
 );

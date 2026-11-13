@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\factoryUsuarios;
+namespace LBBAS\app\controllers;
 
 class factoryUsuarios {
 	/// @Constructor

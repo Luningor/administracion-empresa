@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\controladorEventos;
+namespace LBBAS\app\controllers;
 
 class controladorEventos {
 	static private controladorEventos $instance;

@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\controladorClientes;
+namespace LBBAS\app\controllers;
 
 class controladorClientes {
 	static private controladorClientes $instance;

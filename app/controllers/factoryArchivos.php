@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\factoryArchivos;
+namespace LBBAS\app\controllers;
 
 class factoryArchivos {
 	/// @Constructor

@@ -1,6 +1,6 @@
 <?php
 
-namespace LBBAS\app\controllers\factoryEventos;
+namespace LBBAS\app\controllers;
 
 class factoryEventos {
 	/// @Constructor
