@@ -7,12 +7,12 @@ SET @ENV_DATA_PASSWORD = '!DefaultAnalystPassword1234';
 -- // Admin permissions
 -- Permission hierarchy goes left (most) right (least)
 -- DELETE MODIFY CREATE VIEW NONE
--- Boolean properties take either ALL or NONE
+-- Boolean properties take either DELETE or NONE
 SET @ENV_ADMN_USER_PERMISSION		  = "NONE";
 SET @ENV_ADMN_FILE_PERMISSION		  = "CREATE";
 SET @ENV_ADMN_CONTACT_PERMISSION	  = "CREATE";
 SET @ENV_ADMN_CLIENT_PERMISSION		  = "CREATE";
-SET @ENV_ADMN_LINK_CONTACT_PERMISSION = "ALL";
+SET @ENV_ADMN_LINK_CONTACT_PERMISSION = "DELETE";
 SET @ENV_ADMN_PRODUCT_PERMISSION	  = "DELETE";
 SET @ENV_ADMN_ORDER_PERMISSION		  = "DELETE";
 SET @ENV_ADMN_EVENT_PERMISSION		  = "VIEW";
@@ -55,14 +55,14 @@ INSERT INTO Rol (nombre) VALUES ("ADMINISTRATOR");
 INSERT INTO Rol (nombre) VALUES ("EMPLOYEE");
 
 -- // Config director role permissions
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "USER_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "FILE_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "CONTACT_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "CLIENT_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "LINK_CONTACT_PERMISSION" LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "PRODUCT_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "ORDER_PERMISSION" 		LIMIT 1), "ALL");
-INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "EVENT_PERMISSION" 		LIMIT 1), "ALL");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "USER_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "FILE_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "CONTACT_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "CLIENT_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "LINK_CONTACT_PERMISSION" LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "PRODUCT_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "ORDER_PERMISSION" 		LIMIT 1), "DELETE");
+INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "DIRECTOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "EVENT_PERMISSION" 		LIMIT 1), "DELETE");
 
 -- // Config administrator role permissions
 INSERT INTO PropiedadRol (nombreRol, nombrePermiso, valor) VALUES ((SELECT nombre FROM Rol WHERE nombre = "ADMINISTRATOR" LIMIT 1), (SELECT nombre FROM Permiso WHERE nombre = "USER_PERMISSION" 		 LIMIT 1), @ENV_ADMN_USER_PERMISSION		 );
