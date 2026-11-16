@@ -105,6 +105,7 @@ CREATE TABLE Orden (
 	numeroOrden INT PRIMARY KEY AUTO_INCREMENT,
 	comprador VARCHAR(50) NOT NULL,
 	recibo VARCHAR(120) NOT NULL,
+	fechaOrden TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 	FOREIGN KEY (comprador) REFERENCES Cliente(alias),
 	FOREIGN KEY (recibo) 	REFERENCES Venta(filePath)
 );
@@ -131,27 +132,29 @@ CREATE TABLE EventoUnico (
 
 CREATE TABLE EventoPeriodico (
 	identificadorEvento INT PRIMARY KEY,
-	periodo INT NOT NULL DEFAULT 1 CHECK (periodo > 0),
+	periodo BIGINT(255) NOT NULL DEFAULT 86400 CHECK (periodo > 0),
 	FOREIGN KEY (identificadorEvento) REFERENCES Evento(identificador)
 );
 
 CREATE TABLE Contacto (
 	identificador INT PRIMARY KEY AUTO_INCREMENT,
 	creador BIGINT(255) NOT NULL,
-	cliente VARCHAR(50) NOT NULL,
+	cliente VARCHAR(50) DEFAULT NULL,
 	FOREIGN KEY (creador) REFERENCES Usuario(cedula),
 	FOREIGN KEY (cliente) REFERENCES Cliente(alias)
 );
 
 CREATE TABLE AliasContacto (
-	identificadorContacto INT PRIMARY KEY,
+	identificadorContacto INT NOT NULL,
 	alias VARCHAR(100) NOT NULL,
+	PRIMARY KEY (identificadorContacto, alias),
 	FOREIGN KEY (identificadorContacto) REFERENCES Contacto(identificador)
 );
 
 CREATE TABLE EtiquetaContacto (
-	identificadorContacto INT PRIMARY KEY,
-	etiqueta VARCHAR(100) NOT NULL,
+	identificadorContacto INT NOT NULL,
+	etiqueta VARCHAR(100) NOT NULL CHECK (etiqueta != ""),
+	PRIMARY KEY (identificadorContacto, etiqueta),
 	FOREIGN KEY (identificadorContacto) REFERENCES Contacto(identificador)
 );
 
