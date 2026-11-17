@@ -17,6 +17,8 @@ class Usuario {
 		$this->cedula	  = $CEDULA;
 		$this->nombre	  = $NOMBRE;
 		$this->correo	  = $CORREO;
+		$this->telefono	  = $TELEFONO;
+		$this->celular	  = $CELULAR;
 		$this->clave	  = $CLAVE;
 		$this->habilitado = $HABIL;
 		$this->fechaPago  = $FECHAPAGO;

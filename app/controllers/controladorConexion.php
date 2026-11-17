@@ -1,9 +1,9 @@
 <?php
 
 namespace LBBAS\app\controllers;
-require_once __DIR__ . "/../../config/config.php";
 require_once __DIR__ . "/../core/autoload.php";
 use LBBAS\app\core\logger as logger;
+use LBBAS\config\config as config;
 
 class controladorConexion {
 	static private ?controladorConexion $instance = NULL;
@@ -11,7 +11,10 @@ class controladorConexion {
 
 	/// @Constructor
 	public function __construct() {
+		// Load configs
 		global $_CONFIG;
+		config::get();
+
 		try { $this->connection = new \mysqli($_CONFIG['DB_CONN_SRV'], $_CONFIG['DB_CONN_USR'], $_CONFIG['DB_CONN_PWD'], $_CONFIG['DB_CONN_DBN']); }
 		
 		// Connection failed, handled later when new query is requested.
@@ -37,13 +40,16 @@ class controladorConexion {
 	// Throws an error on failure
 	public function simple_query(string $statement) {
 		if(is_null($this->connection)) {
+			// Load configs
 			global $_CONFIG;
+			config::get();
+
 			try { $this->connection = new \mysqli($_CONFIG['DB_CONN_SRV'], $_CONFIG['DB_CONN_USR'], $_CONFIG['DB_CONN_PWD'], $_CONFIG['DB_CONN_DBN']); }
 			catch(\mysqli_sql_exception $e) {
 				$this->connection = NULL;
 				logger::get()->log_error($e->getMessage());
 			
-				throw new \Exception("CONNECTION TO DATABASE FAILED");
+				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
 			}
 		}
 
@@ -55,49 +61,105 @@ class controladorConexion {
 			// Query failed
 			logger::get()->log_error($e->getMessage());
 
-			throw new \Exception("QUERY FAILED");
+			throw new \Exception("QUERY_FAILED");
 		}
 	}
 
-	// Execute static query
+	// Execute parameterized query
 	// Throws an error on failure
 	public function query(string $statement, string $types, mixed ...$args) {
+		// Check connection integrity
 		if(is_null($this->connection)) {
+			// Load configs
 			global $_CONFIG;
+			config::get();
+			
 			try { $this->connection = new \mysqli($_CONFIG['DB_CONN_SRV'], $_CONFIG['DB_CONN_USR'], $_CONFIG['DB_CONN_PWD'], $_CONFIG['DB_CONN_DBN']); }
 			catch(\mysqli_sql_exception $e) {
 				$this->connection = NULL;
 				logger::get()->log_error($e->getMessage());
 			
-				throw new \Exception("CONNECTION TO DATABASE FAILED");
+				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
 			}
 		}
 
+		// Prepare statement
 		try { $stmt = $this->connection->prepare($statement); }
 		catch(mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
-
-			var_dump($stmt);
-			var_dump(logger::get()->get_log_errors());
-
-			throw new \Exception("STATEMENT PREPARATION FAILED");
+			throw new \Exception("STATEMENT_PREPARATION_FAILED");
 		}
 
+		// Bind parameters
 		try { $stmt->bind_param($types, ...$args); }
 		catch(Exception $e) {
 			logger::get()->log_error($e->getMessage());
-			throw new \Exception("ARGUMENT BINDING FAILED");
+			throw new \Exception("ARGUMENT_BINDING_FAILED");
 		}
 
-		try {
-			$result = $stmt->execute();
-			return $result;
-		}
+		// Execute
+		try { return $stmt->execute(); }
 		catch (\mysqli_sql_exception $e) {
 			// Query failed
 			logger::get()->log_error($e->getMessage());
-			throw new \Exception("QUERY FAILED");
+			throw new \Exception("QUERY_FAILED");
 		}
+	}
+
+	// Execute parameterized query that returns values
+	// Throws an error on failure
+	public function fetch_query(string $statement, string $types, mixed ...$args) {
+		// Check connection integrity
+		if(is_null($this->connection)) {
+			// Load configs
+			global $_CONFIG;
+			config::get();
+			
+			try { $this->connection = new \mysqli($_CONFIG['DB_CONN_SRV'], $_CONFIG['DB_CONN_USR'], $_CONFIG['DB_CONN_PWD'], $_CONFIG['DB_CONN_DBN']); }
+			catch(\mysqli_sql_exception $e) {
+				$this->connection = NULL;
+				logger::get()->log_error($e->getMessage());
+			
+				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
+			}
+		}
+
+		// Prepare statement
+		try { $stmt = $this->connection->prepare($statement); }
+		catch(mysqli_sql_exception $e) {
+			logger::get()->log_error($e->getMessage());
+			throw new \Exception("STATEMENT_PREPARATION_FAILED");
+		}
+
+		// Bind parameters
+		try { $stmt->bind_param($types, ...$args); }
+		catch(Exception $e) {
+			logger::get()->log_error($e->getMessage());
+			throw new \Exception("ARGUMENT_BINDING_FAILED");
+		}
+
+		// Execute
+		try { $stmt->execute(); }
+		catch (\mysqli_sql_exception $e) {
+			// Query failed
+			logger::get()->log_error($e->getMessage());
+			throw new \Exception("QUERY_FAILED");
+		}
+
+		// Get result
+		try { $result = $stmt->get_result(); } 
+		catch (\mysqli_sql_exception $e) {
+			logger::get()->log_error($e->getMessage());
+			throw new \Exception("FAILED_WHILE_GETTING_QUERY_RESULT");
+		}
+
+		// Get associated rows
+		try { return $result->fetch_assoc(); } 
+		catch (\mysqli_sql_exception $e) {
+			logger::get()->log_error($e->getMessage());
+			throw new \Exception("FAILED_TO_FETCH_RESULT");
+		}
+			
 	}
 }
 

@@ -14,5 +14,5 @@ Una empresa (cualquiera) requiere un sistema de gestión que, cómo mínimo, sea
   - **Semanales**, 
   - **Todos los dias** a **una hora** ó 
   - Todos los martes y jueves de ser necesario
-- **Mantener** una _**agenda <ins>bien ordenada</ins> general**_ para la empresa y para cada _**director**_ y _**administrador**_ de la empresa, así como permitir **buscar**, **buscar por usuario registrado**, **por etiquetas**, **pseudónimos**, etc.
+- **Mantener** una _**agenda <ins>bien ordenada</ins> general**_ para la empresa, así como permitir **buscar**, **buscar por usuario registrado**, **por etiquetas**, **pseudónimos**, etc.
 - **Mantener** un **stock de productos** y **servicios**

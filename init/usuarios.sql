@@ -35,7 +35,7 @@ DEALLOCATE PREPARE STATEMENT;
 
 -- @ CONFIGURE USER PERMISSIONS
 GRANT ALL ON empresa.* TO empresa_root;
-GRANT SELECT, INSERT, UPDATE, DELETE ON empresa.* TO empresa_admin;
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON empresa.* TO empresa_admin;
 GRANT SELECT ON empresa.* TO empresa_analyst;
 
 -- // Initialize permission table
