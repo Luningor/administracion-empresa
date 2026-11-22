@@ -1,3 +1,5 @@
+USE empresa;
+
 -- @TODOS LOS EVENTOS A PARTIR DE LA FECHA ACTUAL ORDENADOS POR FECHA
 CREATE VIEW proximos_eventos AS
 	SELECT identificador, descripcion, fecha AS fechaEvento

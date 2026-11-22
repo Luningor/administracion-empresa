@@ -3,7 +3,7 @@
 namespace LBBAS\app\models;
 
 class Producto {
-	private string $uuid;
+	private int $uuid;
 	private string $nombre;
 	private string $descripcion;
 	private int    $stock;

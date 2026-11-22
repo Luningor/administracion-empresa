@@ -114,6 +114,8 @@ CREATE TABLE LineaOrden (
 	uuidProducto INT,
 	numeroOrden INT,
 	cantidad INT NOT NULL DEFAULT 1 CHECK (cantidad > 0),
+	FOREIGN KEY (uuidProducto) REFERENCES Producto(id),
+	FOREIGN KEY (numeroOrden) REFERENCES Orden(numeroOrden),
 	PRIMARY KEY (uuidProducto, numeroOrden)
 );
 

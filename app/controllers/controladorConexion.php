@@ -85,14 +85,14 @@ class controladorConexion {
 
 		// Prepare statement
 		try { $stmt = $this->connection->prepare($statement); }
-		catch(mysqli_sql_exception $e) {
+		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("STATEMENT_PREPARATION_FAILED");
 		}
 
 		// Bind parameters
 		try { $stmt->bind_param($types, ...$args); }
-		catch(Exception $e) {
+		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("ARGUMENT_BINDING_FAILED");
 		}
@@ -126,14 +126,14 @@ class controladorConexion {
 
 		// Prepare statement
 		try { $stmt = $this->connection->prepare($statement); }
-		catch(mysqli_sql_exception $e) {
+		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("STATEMENT_PREPARATION_FAILED");
 		}
 
 		// Bind parameters
 		try { $stmt->bind_param($types, ...$args); }
-		catch(Exception $e) {
+		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("ARGUMENT_BINDING_FAILED");
 		}
