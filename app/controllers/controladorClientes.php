@@ -21,15 +21,17 @@ class controladorClientes {
 		return controladorClientes::$instance;
 	}
 
-	public function getClienteAlias(string $alias) : Cliente {
+	public function getClienteAlias(string $alias) : ?Cliente {
 		if(isset($this->clientes[$alias])) return $this->clientes[$alias];
 		else {
 			// Get from database
-			$queryResult = repo::get_cliente_alias($alias);
+			$queryResult = repo::get_cliente_alias($alias)[0];
 
 			// No client with that alias
-			if(is_null($queryResult))
+			if(is_null($queryResult)) {
 				throw new \Exception("FAILED_TO_GET_CLIENT_NO_CLIENT_WITH_ALIAS");
+				return NULL;
+			}
 
 			$this->clientes[$alias] = new Cliente(
 				$alias, $queryResult["nombre"], $queryResult["informacion"]

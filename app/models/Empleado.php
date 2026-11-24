@@ -1,6 +1,8 @@
 <?php
 
 namespace LBBAS\app\models;
+require_once __DIR__ . "/../core/autoload.php";
+use LBBAS\app\models\Usuario as Usuario;
 
 class Empleado extends Usuario {
 

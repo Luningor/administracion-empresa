@@ -34,7 +34,7 @@ BEGIN
 	DECLARE BASE_PRICE FLOAT(2);
 	SET BASE_PRICE = (SELECT precio FROM producto WHERE id = PRODUCT_ID LIMIT 1);
 	-- PRICE HISTORY FROM BEFORE SPECIFIED DATE (INCLUSIVE)
-	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_PRICES SELECT * FROM historialprecio WHERE id = PRODUCT_ID AND UNIX_TIMESTAMP(fechaCambio) <= UNIX_TIMESTAMP(SPECIFIED_DATE);
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_PRICES SELECT * FROM historialPrecio WHERE id = PRODUCT_ID AND UNIX_TIMESTAMP(fechaCambio) <= UNIX_TIMESTAMP(SPECIFIED_DATE);
 
 	-- GET *LATEST* DATED PRICE OR DEFAULT TO CURRENT PRICE
 	IF (SELECT COUNT(precio) FROM FUNC_TEMP_TABLE_PRICES) > 0 THEN
@@ -156,7 +156,8 @@ CREATE PROCEDURE REGISTER_CLIENT(
 	IN INFORMACION TINYTEXT
 )
 BEGIN
-	INSERT INTO cliente VALUES (ALIAS, NOMBRE, INFORMACION);
+	INSERT INTO cliente 
+	VALUES (ALIAS, NOMBRE, INFORMACION);
 END $$
 
 CREATE PROCEDURE UPDATE_CLIENT_NAME(
@@ -164,7 +165,9 @@ CREATE PROCEDURE UPDATE_CLIENT_NAME(
 	IN NEW_NOMBRE VARCHAR(100)
 )
 BEGIN
-	UPDATE cliente SET nombre = NEW_NOMBRE WHERE alias = CLIENT_ALIAS;
+	UPDATE cliente 
+	SET nombre = NEW_NOMBRE 
+		WHERE alias = CLIENT_ALIAS;
 END $$
 
 CREATE PROCEDURE UPDATE_CLIENT_INFO(
@@ -172,7 +175,9 @@ CREATE PROCEDURE UPDATE_CLIENT_INFO(
 	IN NEW_INFORMACION TINYTEXT
 )
 BEGIN
-	UPDATE cliente SET informacion = NEW_INFORMACION WHERE alias = CLIENT_ALIAS;
+	UPDATE cliente 
+	SET informacion = NEW_INFORMACION 
+		WHERE alias = CLIENT_ALIAS;
 END $$
 
 CREATE PROCEDURE UPDATE_CLIENT_DATA(
@@ -181,12 +186,319 @@ CREATE PROCEDURE UPDATE_CLIENT_DATA(
 	IN NEW_INFORMACION TINYTEXT
 )
 BEGIN
-	UPDATE cliente SET nombre = NEW_NOMBRE, informacion = NEW_INFORMACION WHERE alias = CLIENT_ALIAS;
+	UPDATE cliente 
+	SET nombre = NEW_NOMBRE, informacion = NEW_INFORMACION 
+		WHERE alias = CLIENT_ALIAS;
 END $$
 
 CREATE PROCEDURE GET_CLIENT_DATA(IN CLIENT_ALIAS VARCHAR(50))
 BEGIN
-	SELECT * FROM cliente WHERE alias = CLIENT_ALIAS;
+	SELECT * FROM cliente 
+		WHERE alias = CLIENT_ALIAS;
+END $$
+
+CREATE PROCEDURE REGISTER_PRODUCT(
+	IN NOMBRE VARCHAR(100),
+	IN DESCRIPCION TINYTEXT,
+	IN STOCK INT,
+	IN PRECIO FLOAT(2)
+)
+BEGIN
+	INSERT INTO producto (nombre, descripcion, stock, precio) 
+	VALUES (NOMBRE, DESCRIPCION, STOCK, PRECIO);
+END $$
+
+CREATE PROCEDURE UPDATE_PRODUCT(
+	IN PRODUCT_UUID INT,
+	IN NOMBRE VARCHAR(100),
+	IN DESCRIPCION TINYTEXT,
+	IN STOCK INT
+)
+BEGIN
+	UPDATE producto 
+	SET producto.nombre = NOMBRE, producto.descripcion = DESCRIPCION, producto.stock = STOCK
+		WHERE producto.id = PRODUCT_UUID;
+END $$
+
+CREATE PROCEDURE UPDATE_PRODUCT_PRICE(
+	IN PRODUCT_UUID INT,
+	IN PRECIO FLOAT(2)
+)
+BEGIN
+	SET @OLD_PRICE = (
+		SELECT precio 
+		FROM producto
+			WHERE producto.id = PRODUCT_UUID
+			LIMIT 1
+	);
+
+	INSERT INTO historialPrecio
+	VALUES (PRODUCT_UUID, @OLD_PRICE);
+
+	UPDATE producto 
+	SET producto.precio = PRECIO 
+		WHERE id = PRODUCT_UUID;
+END $$
+
+CREATE PROCEDURE GET_PRODUCT_DATA(
+	IN PRODUCT_UUID INT
+)
+BEGIN
+	SELECT producto.id, nombre, descripcion, stock, producto.precio, historialPrecio.precio AS precioAnterior, fechaCambio FROM producto
+		LEFT JOIN historialPrecio
+		ON producto.id = historialPrecio.id
+		WHERE producto.id = PRODUCT_UUID
+		ORDER BY fechaCambio ASC;
+END $$
+
+CREATE PROCEDURE REGISTER_CONTACT_MAIL(
+	IN CREATOR_ID INT,
+	IN ADDRESS,
+	IN CLIENT_ALIAS
+)
+BEGIN
+	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
+	INSERT INTO mail VALUES (LAST_INSERT_ID(), ADDRESS);
+END $$
+
+CREATE PROCEDURE REGISTER_CONTACT_PHONE(
+	IN CREATOR_ID INT,
+	IN ADDRESS,
+	IN CLIENT_ALIAS
+)
+BEGIN
+	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
+	INSERT INTO telefono VALUES (LAST_INSERT_ID(), ADDRESS);
+END $$
+
+CREATE PROCEDURE REGISTER_CONTACT_CELLPHONE(
+	IN CREATOR_ID INT,
+	IN ADDRESS,
+	IN CLIENT_ALIAS
+)
+BEGIN
+	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
+	INSERT INTO celular VALUES (LAST_INSERT_ID(), ADDRESS)
+END $$
+
+
+CREATE PROCEDURE GET_CONTACT_DATA(
+	IN CONTACT_ID INT
+)
+BEGIN
+	SET @IS_MAIL = (
+	SELECT COUNT(mail.identificadorContacto) AS isMail 
+	FROM contacto
+		CROSS JOIN mail
+		ON mail.identificadorContacto = contacto.identificador
+		WHERE contacto.identificador = CONTACT_ID
+	);
+
+	SET @IS_PHONE_NUMBER = (
+		SELECT COUNT(telefono.identificadorContacto) AS isPhoneNumber 
+		FROM contacto
+			CROSS JOIN telefono
+			ON telefono.identificadorContacto = contacto.identificador
+			WHERE contacto.identificador = CONTACT_ID
+	);
+	
+	SET @IS_CELLPHONE_NUMBER = (
+		SELECT COUNT(celular.identificadorContacto) AS isCellphoneNumber
+		FROM contacto
+			CROSS JOIN celular
+			ON celular.identificadorContacto = contacto.identificador
+			WHERE contacto.identificador = CONTACT_ID
+	);
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_TYPE
+		SELECT CONTACT_ID AS identificador, @IS_MAIL AS isMail, @IS_PHONE_NUMBER AS isPhoneNumber, @IS_CELLPHONE_NUMBER AS isCellphoneNumber;
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DIR
+		SELECT identificadorContacto, direccionEmail AS direccion 
+		FROM mail 
+			WHERE @IS_MAIL > 0 AND identificadorContacto = CONTACT_ID
+		UNION
+		SELECT identificadorContacto, numeroTelefono AS direccion 
+		FROM telefono 
+			WHERE @IS_PHONE_NUMBER > 0 AND identificadorContacto = CONTACT_ID
+		UNION
+		SELECT identificadorContacto, numeroCelular AS direccion 
+		FROM celular 
+			WHERE @IS_CELLPHONE_NUMBER > 0 AND identificadorContacto = CONTACT_ID;
+	
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DATA
+		SELECT identificador, direccion, isMail, isPhoneNumber, isCellphoneNumber
+		FROM FUNC_TEMP_TABLE_CONTACT_TYPE
+			CROSS JOIN FUNC_TEMP_TABLE_CONTACT_DIR
+			ON identificador = identificadorContacto;
+
+	SELECT contacto.identificador, creador, cliente, direccion, isMail, isPhoneNumber, isCellphoneNumber FROM contacto
+		LEFT JOIN FUNC_TEMP_TABLE_CONTACT_DATA
+		ON contacto.identificador <=> FUNC_TEMP_TABLE_CONTACT_DATA.identificador
+		WHERE contacto.identificador = CONTACT_ID;
+
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_TYPE;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DIR;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DATA;
+END $$
+
+CREATE PROCEDURE GET_CONTACT_ALIAS_DATA(
+	IN CONTACT_ID INT
+)
+BEGIN
+	SELECT alias FROM aliascontacto WHERE identificadorContacto = CONTACT_ID;
+END $$
+
+CREATE PROCEDURE GET_CONTACT_TAG_DATA(
+	IN CONTACT_ID INT
+)
+BEGIN
+	SELECT etiqueta FROM etiquetacontacto WHERE identificadorContacto = CONTACT_ID;
+END $$
+
+CREATE PROCEDURE GET_CONTACTS_FROM_CLIENT(
+	IN ALIAS VARCHAR(50)
+)
+BEGIN
+	DECLARE COUNT_CONTACTS_CLIENT INT;
+	DECLARE CONTACT_ID INT;
+	DECLARE I INT;
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACTS_CLIENT
+		SELECT * FROM contacto 
+			WHERE cliente = ALIAS
+			ORDER BY identificador ASC;
+
+	SET COUNT_CONTACTS_CLIENT = (SELECT COUNT(identificador) FROM FUNC_TEMP_TABLE_CONTACTS_CLIENT);
+	SET I = 0;
+
+	WHILE I < COUNT_CONTACTS_CLIENT DO
+		-- SET ID
+		SET CONTACT_ID = (
+			SELECT identificador 
+			FROM FUNC_TEMP_TABLE_CONTACTS_CLIENT 
+				LIMIT 1 OFFSET I
+		);
+
+		-- GET CONTACT TYPE
+		SET @IS_MAIL = (
+		SELECT COUNT(mail.identificadorContacto) AS isMail 
+		FROM contacto
+			CROSS JOIN mail
+			ON mail.identificadorContacto = contacto.identificador
+			WHERE contacto.identificador = CONTACT_ID
+		);
+
+		SET @IS_PHONE_NUMBER = (
+			SELECT COUNT(telefono.identificadorContacto) AS isPhoneNumber 
+			FROM contacto
+				CROSS JOIN telefono
+				ON telefono.identificadorContacto = contacto.identificador
+				WHERE contacto.identificador = CONTACT_ID
+		);
+		
+		SET @IS_CELLPHONE_NUMBER = (
+			SELECT COUNT(celular.identificadorContacto) AS isCellphoneNumber
+			FROM contacto
+				CROSS JOIN celular
+				ON celular.identificadorContacto = contacto.identificador
+				WHERE contacto.identificador = CONTACT_ID
+		);
+
+		CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_TYPE
+			SELECT CONTACT_ID AS identificador, @IS_MAIL AS isMail, @IS_PHONE_NUMBER AS isPhoneNumber, @IS_CELLPHONE_NUMBER AS isCellphoneNumber;
+
+		-- GET CONTACT INFO
+		CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DIR
+			SELECT identificadorContacto, direccionEmail AS direccion 
+			FROM mail 
+				WHERE @IS_MAIL > 0 AND identificadorContacto = CONTACT_ID
+			UNION
+			SELECT identificadorContacto, numeroTelefono AS direccion 
+			FROM telefono 
+				WHERE @IS_PHONE_NUMBER > 0 AND identificadorContacto = CONTACT_ID
+			UNION
+			SELECT identificadorContacto, numeroCelular AS direccion 
+			FROM celular 
+				WHERE @IS_CELLPHONE_NUMBER > 0 AND identificadorContacto = CONTACT_ID;
+		
+		-- JOIN TYPE AND INFO
+		CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DATA
+			SELECT identificador, direccion, isMail, isPhoneNumber, isCellphoneNumber
+			FROM FUNC_TEMP_TABLE_CONTACT_TYPE
+				CROSS JOIN FUNC_TEMP_TABLE_CONTACT_DIR
+				ON identificador = identificadorContacto;
+
+		CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_ALL_DATA
+			SELECT contacto.identificador, creador, cliente, direccion, isMail, isPhoneNumber, isCellphoneNumber FROM contacto
+				LEFT JOIN FUNC_TEMP_TABLE_CONTACT_DATA
+				ON contacto.identificador <=> FUNC_TEMP_TABLE_CONTACT_DATA.identificador
+				WHERE contacto.identificador = CONTACT_ID;
+
+		-- COPY STRUCTURE FROM TEMP TABLE INTO EMPTY PERSISTENT ONE
+		CREATE TEMPORARY TABLE IF NOT EXISTS FUNC_TEMP_TABLE_ALL_CONTACTS_FROM_CLIENT AS 
+			SELECT * FROM FUNC_TEMP_TABLE_CONTACT_ALL_DATA WHERE 1 = 2; # (1 = 2) MATCHES NONE SO EMPTY TABLE 
+
+		INSERT INTO FUNC_TEMP_TABLE_ALL_CONTACTS_FROM_CLIENT (identificador, creador, cliente, direccion, isMail, isPhoneNumber, isCellphoneNumber)
+			SELECT identificador, creador, cliente, direccion, isMail, isPhoneNumber, isCellphoneNumber 
+			FROM FUNC_TEMP_TABLE_CONTACT_ALL_DATA;
+
+		DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_TYPE;
+		DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DIR;
+		DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_DATA;
+		DROP TEMPORARY TABLE FUNC_TEMP_TABLE_CONTACT_ALL_DATA;
+
+		-- UPDATE INDEX
+		SET I = I + 1;
+
+	END WHILE;
+
+	SELECT * FROM FUNC_TEMP_TABLE_ALL_CONTACTS_FROM_CLIENT;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_ALL_CONTACTS_FROM_CLIENT;
+
+END $$
+
+CREATE PROCEDURE ASSIGN_CONTACT_CLIENT(
+	IN CONTACT_ID INT,
+	IN CLIENT_ALIAS VARCHAR(50)
+)
+BEGIN
+	UPDATE contacto 
+	SET cliente = (SELECT alias FROM cliente WHERE alias = CLIENT_ALIAS LIMIT 1) 
+		WHERE identificador = CONTACT_ID;
+END $$
+
+
+CREATE PROCEDURE DELETE_CONTACT(
+	IN CONTACT_ID INT
+)
+BEGIN
+	DELETE FROM contacto WHERE contacto.identificador = CONTACT_ID;
+
+	DELETE FROM mail WHERE mail.identificadorContacto = CONTACT_ID;
+	DELETE FROM telefono WHERE telefono.identificadorContacto = CONTACT_ID;
+	DELETE FROM celular WHERE celular.identificadorContacto = CONTACT_ID;
+
+	DELETE FROM aliascontacto WHERE aliascontacto.identificadorContacto = CONTACT_ID;
+	DELETE FROM etiquetacontacto WHERE etiquetacontacto.identificadorContacto = CONTACT_ID;
+END $$
+
+CREATE PROCEDURE DELETE_ALIAS_FROM_CONTACT(
+	IN CONTACT_ID INT,
+	IN ALIAS VARCHAR(100)
+)
+BEGIN
+	DELETE FROM aliascontacto 
+		WHERE aliascontacto.identificadorContacto = CONTACT_ID AND aliascontacto.alias = ALIAS;
+END $$
+
+CREATE PROCEDURE DELETE_TAG_FROM_CONTACT(
+	IN CONTACT_ID INT,
+	IN TAG VARCHAR(100)
+)
+BEGIN
+	DELETE FROM etiquetacontacto 
+		WHERE etiquetacontacto.identificadorContacto = CONTACT_ID AND etiquetacontacto.etiqueta = TAG;
 END $$
 
 DELIMITER ;

@@ -25,15 +25,18 @@ class controladorUsuarios {
 		return controladorUsuarios::$instance;
 	}
 
-	public function getUsuarioCedula(int $cedula) : Usuario {
+	public function getUsuarioCedula(int $cedula) : ?Usuario {
 		if(isset($this->usuarios[$cedula])) return $this->usuarios[$cedula];
 		else {
 			// Get from database
-			$queryResult = repo::get_usuario_cedula($cedula);
+			$queryResult = repo::get_usuario_cedula($cedula)[0];
 
 			// No user with that id
-			if(is_null($queryResult))
+			if(is_null($queryResult)) {
 				throw new \Exception("FAILED_TO_GET_USER_NO_USER_WITH_ID");
+				echo "excecuted";
+				return NULL;
+			}
 
 			$this->usuarios[$cedula] = $this->factory->create(
 				($queryResult["isDirector"] == true ? "Director" : ($queryResult["isAdministrator"] == true ? "Administrador" : ($queryResult["isEmployee"] == true ? "Empleado" : NULL))),

@@ -80,7 +80,7 @@ class Usuario {
 
 	/// @Methods
 	static private function checkNombreIntegrity(string $nombre) : bool {
-		// Only letters with points and spaces inbetween
+		// Only letters with points and spaces inbetween, at least 4 characters long
 		return preg_match("/^(?=^[a-zA-z].*[a-zA-Z]*$)(?=.*[ \.]*)(?!^[ \.].*)(?!.*[ \.]$).{4,}$/", $nombre);
 	}
 	
@@ -90,7 +90,7 @@ class Usuario {
 	
 	static private function checkNumeroIntegrity(string $numero) : bool {
 		// Starts with * or +, has at least one number, numbers inbetween are separated by spaces, ends with a number or a #
-		return preg_match("/^(\+|\*){0,1}(\d+)(\d+| )*(\d+)\#{0,1}$/", $telefono);
+		return preg_match("/^(\+|\*){0,1}(\d+)(\d+| )*(\d+)\#{0,1}$/", $numero);
 	}
 	
 	static private function checkClaveIntegrity(string $clave) : bool {

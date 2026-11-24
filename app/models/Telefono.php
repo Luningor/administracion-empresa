@@ -1,6 +1,9 @@
 <?php
 
 namespace LBBAS\app\models;
+require_once __DIR__ . "/../core/autoload.php";
+use LBBAS\app\models\Contacto as Contacto;
+use LBBAS\app\models\Usuario as Usuario;
 
 class Telefono extends Contacto {
 	private string $numeroTelefono;
@@ -19,9 +22,18 @@ class Telefono extends Contacto {
 	/// @Getters
 
 	/// @Setters
+	public function setDireccionContacto(string $direccion) : bool {
+		if(empty($direccion)) return false;
+		if(!Telefono::checkNumeroIntegrity($direccion)) return false;
+	
+		$this->numeroTelefono = $direccion;
+	}
 
 	/// @Methods
-	
+	// Same format as user numbers to keep consistency
+	public static function checkNumeroIntegrity(string $numero) : bool {
+		return Usuario::checkNumeroIntegrity($numero);
+	}
 }
 
 ?>

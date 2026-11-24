@@ -50,6 +50,7 @@ class controladorConexion {
 				logger::get()->log_error($e->getMessage());
 			
 				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
+				return false;
 			}
 		}
 
@@ -62,6 +63,7 @@ class controladorConexion {
 			logger::get()->log_error($e->getMessage());
 
 			throw new \Exception("QUERY_FAILED");
+			return false;
 		}
 	}
 
@@ -80,6 +82,7 @@ class controladorConexion {
 				logger::get()->log_error($e->getMessage());
 			
 				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
+				return false;
 			}
 		}
 
@@ -88,6 +91,7 @@ class controladorConexion {
 		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("STATEMENT_PREPARATION_FAILED");
+			return false;
 		}
 
 		// Bind parameters
@@ -95,6 +99,7 @@ class controladorConexion {
 		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("ARGUMENT_BINDING_FAILED");
+			return false;
 		}
 
 		// Execute
@@ -103,6 +108,7 @@ class controladorConexion {
 			// Query failed
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("QUERY_FAILED");
+			return false;
 		}
 	}
 
@@ -121,6 +127,7 @@ class controladorConexion {
 				logger::get()->log_error($e->getMessage());
 			
 				throw new \Exception("CONNECTION_TO_DATABASE_FAILED");
+				return false;
 			}
 		}
 
@@ -129,6 +136,7 @@ class controladorConexion {
 		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("STATEMENT_PREPARATION_FAILED");
+			return false;
 		}
 
 		// Bind parameters
@@ -136,6 +144,7 @@ class controladorConexion {
 		catch(\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("ARGUMENT_BINDING_FAILED");
+			return false;
 		}
 
 		// Execute
@@ -144,6 +153,7 @@ class controladorConexion {
 			// Query failed
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("QUERY_FAILED");
+			return false;
 		}
 
 		// Get result
@@ -151,13 +161,24 @@ class controladorConexion {
 		catch (\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("FAILED_WHILE_GETTING_QUERY_RESULT");
+			return false;
 		}
 
 		// Get associated rows
-		try { return $result->fetch_assoc(); } 
+		try {
+			$rows = [];
+			do {
+				$check = $result->fetch_assoc();
+				if(!is_null($check)) $rows[] = $check;
+			} 
+			while(!is_null($check));
+			
+			return $rows; 
+		} 
 		catch (\mysqli_sql_exception $e) {
 			logger::get()->log_error($e->getMessage());
 			throw new \Exception("FAILED_TO_FETCH_RESULT");
+			return false;
 		}
 			
 	}

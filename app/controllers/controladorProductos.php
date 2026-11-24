@@ -21,20 +21,37 @@ class controladorProductos {
 		return controladorProductos::$instance;
 	}
 
-	public function getProductoId(int $id) : Producto {
+	public function getProductoId(int $id) : ?Producto {
 		if(isset($this->productos[$id])) return $this->productos[$id];
 		else {
 			// Get from database
 			$queryResult = repo::get_producto_id($id);
 
 			// No client with that alias
-			if(is_null($queryResult))
+			if(is_null($queryResult)) {
 				throw new \Exception("FAILED_TO_GET_PRODUCT_NO_PRODUCT_WITH_ID");
+				return NULL;
+			}
 
-			$this->productos[$id] = new Producto(
-				$id, $queryResult["nombre"], $queryResult["descripcion"], $queryResult["stock"], $queryResult["precio"]
-			);
+			if(isset($queryResult[0]["precioAnterior"])) {
+				// Create object with oldest price (since the result is in ascending order)
+				$this->productos[$id] = new Producto(
+					$id, $queryResult[0]["nombre"], $queryResult[0]["descripcion"], $queryResult[0]["stock"], $queryResult[0]["precioAnterior"]
+				);
 
+				// Update it chronologically
+				if(isset($queryResult[1])) // Check that there's at least one more record
+					for($i = 1; $i < count($queryResult); $i++)
+						$this->productos[$id]->setPrecio($queryResult[$i]["precioAnterior"]);
+				
+				// End with current price
+				$this->productos[$id]->setPrecio($queryResult[0]["precio"]);
+			}
+			else
+				$this->productos[$id] = new Producto(
+					$id, $queryResult[0]["nombre"], $queryResult[0]["descripcion"], $queryResult[0]["stock"], $queryResult[0]["precio"]
+				);
+			
 			return $this->productos[$id];
 		}
 	}
@@ -66,7 +83,12 @@ class controladorProductos {
 	}
 
 	public function actualizarPrecioProducto(int $uuid, float $precio) : bool {
+		if(repo::actualizar_precio_producto($uuid, $precio)) {
+			$this->getProductoId($uuid)->setPrecio();
+			return true;
+		}
 
+		return false;
 	}
 
 	public function buscarProducto(string $text) : array {

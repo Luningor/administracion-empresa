@@ -17,14 +17,14 @@ class controladorOrdenes {
 
 	/// @Getters
 	public static function get() {
-		controladorEventos::$instance = controladorEventos::$instance ?? new controladorEventos();
-		return controladorEventos::$instance;
+		controladorOrdenes::$instance = controladorOrdenes::$instance ?? new controladorOrdenes();
+		return controladorOrdenes::$instance;
 	}
 
 	/// @Setters
 
 	/// @Methods
-	
+	// public function crearOrden(string $alias)
 }
 
 ?>
