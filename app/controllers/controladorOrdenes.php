@@ -16,7 +16,7 @@ class controladorOrdenes {
 	public function __destruct() {}
 
 	/// @Getters
-	public static function get() {
+	public static function get() : controladorOrdenes {
 		controladorOrdenes::$instance = controladorOrdenes::$instance ?? new controladorOrdenes();
 		return controladorOrdenes::$instance;
 	}

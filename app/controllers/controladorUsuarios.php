@@ -34,7 +34,6 @@ class controladorUsuarios {
 			// No user with that id
 			if(is_null($queryResult)) {
 				throw new \Exception("FAILED_TO_GET_USER_NO_USER_WITH_ID");
-				echo "excecuted";
 				return NULL;
 			}
 

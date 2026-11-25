@@ -16,7 +16,7 @@ class controladorProductos {
 	public function __destruct() {}
 
 	/// @Getters
-	public static function get() {
+	public static function get() : controladorProductos {
 		controladorProductos::$instance = controladorProductos::$instance ?? new controladorProductos();
 		return controladorProductos::$instance;
 	}

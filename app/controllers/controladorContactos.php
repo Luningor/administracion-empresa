@@ -20,7 +20,7 @@ class controladorContactos {
 	public function __destruct() {}
 
 	/// @Getters
-	public static function get() {
+	public static function get() : controladorContactos {
 		controladorContactos::$instance = controladorContactos::$instance ?? new controladorContactos();
 		return controladorContactos::$instance;
 	}
@@ -156,16 +156,10 @@ class controladorContactos {
 			return $this->getContactoId($id)->removeAlias($alias);
 	}
 	
-	public function eliminarEtiquetaContactoId() : bool {
-		if(repo::eliminar_etiqueta_contacto_id($id)) {
-			
-		}
+	public function eliminarEtiquetaContactoId(int $id, string $etiqueta) : bool {
+		if(repo::eliminar_etiqueta_contacto_id($id, $etiqueta)) 
+			return $this->getContactoId($id)->removeEtiqueta($etiqueta);
 	}
 }
-
-controladorContactos::get()->getContactosAlias("aesthetical.extratensive");
-var_dump(controladorContactos::get());
-controladorContactos::get()->eliminarAliasContactoId(13, "Orville Valiente");
-var_dump(controladorContactos::get());
 
 ?>

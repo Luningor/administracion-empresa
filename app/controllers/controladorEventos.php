@@ -16,7 +16,7 @@ class controladorEventos {
 	public function __destruct() {}
 
 	/// @Getters
-	public static function get() {
+	public static function get() : controladorEventos {
 		controladorEventos::$instance = controladorEventos::$instance ?? new controladorEventos();
 		return controladorEventos::$instance;
 	}

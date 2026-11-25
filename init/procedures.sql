@@ -253,8 +253,8 @@ END $$
 
 CREATE PROCEDURE REGISTER_CONTACT_MAIL(
 	IN CREATOR_ID INT,
-	IN ADDRESS,
-	IN CLIENT_ALIAS
+	IN ADDRESS VARCHAR(100),
+	IN CLIENT_ALIAS VARCHAR(50)
 )
 BEGIN
 	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
@@ -263,8 +263,8 @@ END $$
 
 CREATE PROCEDURE REGISTER_CONTACT_PHONE(
 	IN CREATOR_ID INT,
-	IN ADDRESS,
-	IN CLIENT_ALIAS
+	IN ADDRESS VARCHAR(100),
+	IN CLIENT_ALIAS VARCHAR(50)
 )
 BEGIN
 	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
@@ -273,12 +273,12 @@ END $$
 
 CREATE PROCEDURE REGISTER_CONTACT_CELLPHONE(
 	IN CREATOR_ID INT,
-	IN ADDRESS,
-	IN CLIENT_ALIAS
+	IN ADDRESS VARCHAR(100),
+	IN CLIENT_ALIAS VARCHAR(50)
 )
 BEGIN
 	INSERT INTO contacto (creador, cliente) VALUES (CREATOR_ID, CLIENT_ALIAS);
-	INSERT INTO celular VALUES (LAST_INSERT_ID(), ADDRESS)
+	INSERT INTO celular VALUES (LAST_INSERT_ID(), ADDRESS);
 END $$
 
 
@@ -499,6 +499,207 @@ CREATE PROCEDURE DELETE_TAG_FROM_CONTACT(
 BEGIN
 	DELETE FROM etiquetacontacto 
 		WHERE etiquetacontacto.identificadorContacto = CONTACT_ID AND etiquetacontacto.etiqueta = TAG;
+END $$
+
+CREATE PROCEDURE REGISTER_PURCHASE(
+	IN FILE_PATH VARCHAR(120),
+	IN CREATOR BIGINT(255),
+	IN FILENAME VARCHAR(100),
+	IN CREATION_DATE BIGINT(255),
+	IN BUYER BIGINT(255)
+)
+BEGIN
+	INSERT INTO archivo 
+	SET filePath = FILE_PATH, 
+		creador = (SELECT cedula FROM usuario WHERE cedula = CREATOR LIMIT 1), 
+		nombre = FILENAME, 
+		fechaCreacion = FROM_UNIXTIME(CREATION_DATE);
+
+	INSERT INTO compra
+	SET filePath = (SELECT filePath FROM archivo WHERE filePath = FILE_PATH LIMIT 1),
+		compradoPor = BUYER;
+END $$
+
+CREATE PROCEDURE REGISTER_SALE(
+	IN FILE_PATH VARCHAR(120),
+	IN CREATOR BIGINT(255),
+	IN FILENAME VARCHAR(100),
+	IN CREATION_DATE BIGINT(255)
+)
+BEGIN
+	INSERT INTO archivo 
+	SET filePath = FILE_PATH, 
+		creador = (SELECT cedula FROM usuario WHERE cedula = CREATOR LIMIT 1), 
+		nombre = FILENAME, 
+		fechaCreacion = FROM_UNIXTIME(CREATION_DATE);
+
+	INSERT INTO venta
+	SET filePath = (SELECT filePath FROM archivo WHERE filePath = FILE_PATH LIMIT 1);
+END $$
+
+CREATE PROCEDURE REGISTER_DOCUMENT(
+	IN FILE_PATH VARCHAR(120),
+	IN CREATOR BIGINT(255),
+	IN FILENAME VARCHAR(100),
+	IN CREATION_DATE BIGINT(255),
+	IN DESCRIPTION TINYTEXT,
+	IN IS_VISIBLE BOOLEAN
+)
+BEGIN
+	INSERT INTO archivo 
+	SET filePath = FILE_PATH, 
+		creador = (SELECT cedula FROM usuario WHERE cedula = CREATOR LIMIT 1), 
+		nombre = FILENAME, 
+		fechaCreacion = FROM_UNIXTIME(CREATION_DATE);
+
+	INSERT INTO documento
+	SET filePath = (SELECT filePath FROM archivo WHERE filePath = FILE_PATH LIMIT 1),
+		descripcion = DESCRIPTION,
+		visible = IS_VISIBLE;
+
+END $$
+
+CREATE PROCEDURE REGISTER_PAYMENT(
+	IN FILE_PATH VARCHAR(120),
+	IN CREATOR BIGINT(255),
+	IN FILENAME VARCHAR(100),
+	IN CREATION_DATE BIGINT(255),
+	IN RECIPIENT_ID BIGINT(255)
+)
+BEGIN
+	INSERT INTO archivo 
+	SET filePath = FILE_PATH, 
+		creador = (SELECT cedula FROM usuario WHERE cedula = CREATOR LIMIT 1), 
+		nombre = FILENAME, 
+		fechaCreacion = FROM_UNIXTIME(CREATION_DATE);
+
+	INSERT INTO sueldo
+	SET filePath = (SELECT filePath FROM archivo WHERE filePath = FILE_PATH LIMIT 1),
+		recipiente = (SELECT cedula FROM usuario WHERE cedula = RECIPIENT_ID LIMIT 1);
+END $$
+
+CREATE PROCEDURE GET_FILE_DATA(
+	IN FILE_PATH VARCHAR(120)
+)
+BEGIN
+	SET @IS_PURCHASE = (
+	SELECT COUNT(compra.filePath) AS isPurchase 
+	FROM archivo
+		CROSS JOIN compra
+		ON compra.filePath = archivo.filePath
+		WHERE archivo.filePath = FILE_PATH
+	);
+
+	SET @IS_SALE = (
+	SELECT COUNT(venta.filePath) AS isSale 
+	FROM archivo
+		CROSS JOIN venta
+		ON venta.filePath = archivo.filePath
+		WHERE archivo.filePath = FILE_PATH
+	);
+
+	SET @IS_DOCUMENT = (
+	SELECT COUNT(documento.filePath) AS isDocument 
+	FROM archivo
+		CROSS JOIN documento
+		ON documento.filePath = archivo.filePath
+		WHERE archivo.filePath = FILE_PATH
+	);
+	
+	SET @IS_PAYMENT = (
+		SELECT COUNT(sueldo.filePath) AS isPayment
+	FROM archivo
+		CROSS JOIN sueldo
+		ON sueldo.filePath = archivo.filePath
+		WHERE archivo.filePath = FILE_PATH
+	);
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_TYPE
+		SELECT FILE_PATH AS filePath, @IS_PURCHASE AS isPurchase, @IS_SALE AS isSale, @IS_DOCUMENT AS isDocument, @IS_PAYMENT AS isPayment;
+		
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_COMPRA_DATA
+		SELECT archivo.filePath, creador, nombre, fechaCreacion, compradoPor 
+		FROM archivo
+			LEFT JOIN compra
+			ON archivo.filePath = compra.filePath
+			WHERE @IS_PURCHASE > 0 AND archivo.filePath = FILE_PATH;
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_VENTA_DATA
+		SELECT archivo.filePath, creador, nombre, fechaCreacion 
+		FROM archivo
+			LEFT JOIN venta
+			ON archivo.filePath = venta.filePath
+			WHERE @IS_SALE > 0 AND archivo.filePath = FILE_PATH;
+			
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_DOCUMENTO_DATA
+		SELECT archivo.filePath, creador, nombre, fechaCreacion, descripcion, visible 
+		FROM archivo
+			LEFT JOIN documento
+			ON archivo.filePath = documento.filePath
+			WHERE @IS_DOCUMENT > 0 AND archivo.filePath = FILE_PATH;
+			
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_SUELDO_DATA
+		SELECT archivo.filePath, creador, nombre, fechaCreacion, recipiente 
+		FROM archivo
+			LEFT JOIN sueldo
+			ON archivo.filePath = sueldo.filePath
+			WHERE @IS_PAYMENT > 0 AND archivo.filePath = FILE_PATH;
+	
+	-- REPLICATE FULL POSSIBLE DATA STRUCTURE
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_CROSS_JOIN
+		SELECT 
+			FUNC_TEMP_TABLE_FILE_COMPRA_DATA.filePath, 
+			FUNC_TEMP_TABLE_FILE_COMPRA_DATA.creador, 
+			FUNC_TEMP_TABLE_FILE_COMPRA_DATA.nombre, 
+			FUNC_TEMP_TABLE_FILE_COMPRA_DATA.fechaCreacion,
+			compradoPor, descripcion, visible, recipiente
+		FROM FUNC_TEMP_TABLE_FILE_COMPRA_DATA
+			CROSS JOIN FUNC_TEMP_TABLE_FILE_VENTA_DATA
+			ON FUNC_TEMP_TABLE_FILE_COMPRA_DATA.filePath <=> FUNC_TEMP_TABLE_FILE_VENTA_DATA.filePath
+			CROSS JOIN FUNC_TEMP_TABLE_FILE_DOCUMENTO_DATA
+			ON FUNC_TEMP_TABLE_FILE_COMPRA_DATA.filePath <=> FUNC_TEMP_TABLE_FILE_DOCUMENTO_DATA.filePath
+			CROSS JOIN FUNC_TEMP_TABLE_FILE_SUELDO_DATA
+			ON FUNC_TEMP_TABLE_FILE_COMPRA_DATA.filePath <=> FUNC_TEMP_TABLE_FILE_SUELDO_DATA.filePath
+			WHERE 1 = 2;
+
+	-- POPULATE TABLE
+	INSERT INTO FUNC_TEMP_TABLE_FILE_CROSS_JOIN (filePath, creador, nombre, fechaCreacion, compradoPor)
+	SELECT filePath, creador, nombre, fechaCreacion, compradoPor
+	FROM FUNC_TEMP_TABLE_FILE_COMPRA_DATA;
+
+	INSERT INTO FUNC_TEMP_TABLE_FILE_CROSS_JOIN (filePath, creador, nombre, fechaCreacion)
+	SELECT filePath, creador, nombre, fechaCreacion 
+	FROM FUNC_TEMP_TABLE_FILE_VENTA_DATA;
+
+	INSERT INTO FUNC_TEMP_TABLE_FILE_CROSS_JOIN (filePath, creador, nombre, fechaCreacion, descripcion, visible)
+	SELECT filePath, creador, nombre, fechaCreacion, descripcion, visible
+	FROM FUNC_TEMP_TABLE_FILE_DOCUMENTO_DATA;
+
+	INSERT INTO FUNC_TEMP_TABLE_FILE_CROSS_JOIN (filePath, creador, nombre, fechaCreacion, recipiente)
+	SELECT filePath, creador, nombre, fechaCreacion, recipiente
+	FROM FUNC_TEMP_TABLE_FILE_SUELDO_DATA;
+
+
+
+	CREATE TEMPORARY TABLE FUNC_TEMP_TABLE_FILE
+		SELECT 
+			FUNC_TEMP_TABLE_FILE_TYPE.filePath, 
+			creador, nombre, UNIX_TIMESTAMP(fechaCreacion) AS fechaCreacion,
+			isPurchase, isSale, isDocument, isPayment,
+			compradoPor, descripcion, visible, recipiente
+		FROM FUNC_TEMP_TABLE_FILE_TYPE
+			CROSS JOIN FUNC_TEMP_TABLE_FILE_CROSS_JOIN
+			ON FUNC_TEMP_TABLE_FILE_TYPE.filePath = FUNC_TEMP_TABLE_FILE_TYPE.filePath;
+
+	SELECT * FROM FUNC_TEMP_TABLE_FILE;
+
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_TYPE;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_COMPRA_DATA;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_VENTA_DATA;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_DOCUMENTO_DATA;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_SUELDO_DATA;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE_CROSS_JOIN;
+	DROP TEMPORARY TABLE FUNC_TEMP_TABLE_FILE;
 END $$
 
 DELIMITER ;

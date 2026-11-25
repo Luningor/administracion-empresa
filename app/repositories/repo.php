@@ -2,10 +2,11 @@
 
 namespace LBBAS\app\repositories;
 use LBBAS\app\controllers\controladorConexion as controladorConexion;
-use LBBAS\app\models\Usuario as Usuario;
-use LBBAS\app\models\Cliente as Cliente;
+use LBBAS\app\models\Usuario  as Usuario;
+use LBBAS\app\models\Cliente  as Cliente;
 use LBBAS\app\models\Producto as Producto;
 use LBBAS\app\models\Contacto as Contacto;
+use LBBAS\app\models\Archivo  as Archivo;
 
 class repo {
 	/// @Consultas relacionadas a usuarios
@@ -291,7 +292,7 @@ class repo {
 		}
 
 		public static function registrar_producto(string $nombre, string $descripcion, int $stock, float $precio) : bool {
-			if(repo::check_valid_product_info($nombre, $descripcion, $stock, $precio)) return false;
+			if(!repo::check_valid_product_info($nombre, $descripcion, $stock, $precio)) return false;
 
 			return controladorConexion::get()->query(
 				"CALL REGISTER_PRODUCT(?, ?, ?, ?);", "ssid", 
@@ -439,7 +440,7 @@ class repo {
 		}
 
 		public static function registrar_mail(int $creador, string $mail, ?string $cliente = NULL, ?array $aliases = NULL, ?array $tags = NULL) : ?int {
-			if(repo::check_valid_contact_info("Mail", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
+			if(!repo::check_valid_contact_info("Mail", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
 
 			$client_param = is_null($cliente) ? "NULL" : "?";
 			$query = "CALL REGISTER_CONTACT_MAIL(?, ?, {$client_param});";
@@ -457,7 +458,7 @@ class repo {
 		}
 		
 		public static function registrar_telefono(int $creador, string $telefono, ?string $cliente = NULL, ?array $aliases = NULL, ?array $tags = NULL) : ?int {
-			if(repo::check_valid_contact_info("Telefono", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
+			if(!repo::check_valid_contact_info("Telefono", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
 
 			$client_param = is_null($cliente) ? "NULL" : "?";
 			$query = "CALL REGISTER_CONTACT_PHONE(?, ?, {$client_param});";
@@ -475,7 +476,7 @@ class repo {
 		}
 		
 		public static function registrar_celular(int $creador, string $celular, ?string $cliente = NULL, ?array $aliases = NULL, ?array $tags = NULL) : ?int {
-			if(repo::check_valid_contact_info("Celular", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
+			if(!repo::check_valid_contact_info("Celular", $creador, $mail, $cliente, $aliases, $tags)) return NULL;
 
 			$client_param = is_null($cliente) ? "NULL" : "?";
 			$query = "CALL REGISTER_CONTACT_CELLPHONE(?, ?, {$client_param});";
@@ -576,6 +577,109 @@ class repo {
 				"CALL DELETE_TAG_FROM_CONTACT(?, ?);", "is", 
 				$id, $etiqueta
 			);
+		}
+
+	/// @Consultas relacionadas a archivos
+		public static function check_valid_file_info(string $tipo, string $path, int $creador, string $nombre, int $fechaCreacion, mixed ...$args) : bool {
+			if(empty($tipo)) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_MISSING_TYPE");
+				return false;
+			}
+
+			if(empty($path)) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_MISSING_FILEPATH");
+				return false;
+			}
+
+			if(!Archivo::checkFilePathIntegrity($path)) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_INVALID_FILEPATH");
+				return false;
+			}
+
+			if(empty($nombre)) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_EMPTY_FILENAME");
+				return false;
+			}
+
+			if(!Archivo::checkNombreIntegrity($nombre)) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_INVALID_FILENAME");
+				return false;
+			}
+
+			$check = false;
+
+			switch($tipo) {
+				case 'Compra':
+					$check = func_num_args() !== 6;
+					break;
+				case 'Venta':
+					$check = func_num_args() !== 5;
+					break;
+				case 'Documento':
+					$check = func_num_args() !== 7;
+					break;
+				case 'Sueldo':
+					$check = func_num_args() !== 6;
+					break;
+				default:
+					throw new \Exception("FAILED_TO_CREATE_FILE_INVALID_TYPE");
+					return false;
+			}
+
+			if($check) {
+				throw new \Exception("FAILED_TO_CREATE_FILE_INVALID_NUMBER_OF_ARGUMENTS");
+				return false;
+			}
+
+			return true;
+		}
+
+		public static function registrar_archivo_compra(string $path, int $creador, string $nombre, int $fechaCreacion, int $comprador) : bool {
+			if(!repo::check_valid_file_info("Compra", $path, $creador, $nombre, $fechaCreacion, $comprador)) return false;
+
+			return controladorConexion::get()->query(
+				"CALL REGISTER_PURCHASE(?, ?, ?, ?, ?);", "sisii", 
+				$path, $creador, $nombre, $fechaCreacion, $comprador
+			);
+		}
+		
+		public static function registrar_archivo_venta(string $path, int $creador, string $nombre, int $fechaCreacion) : bool {
+			if(!repo::check_valid_file_info("Venta", $path, $creador, $nombre, $fechaCreacion)) return false;
+
+			return controladorConexion::get()->query(
+				"CALL REGISTER_SALE(?, ?, ?, ?);", "sisi", 
+				$path, $creador, $nombre, $fechaCreacion
+			);
+		}
+		
+		public static function registrar_documento(string $path, int $creador, string $nombre, int $fechaCreacion, string $descripcion, bool $visible) : bool {
+			if(!repo::check_valid_file_info("Documento", $path, $creador, $nombre, $fechaCreacion, $descripcion, $visible)) return false;
+
+			return controladorConexion::get()->query(
+				"CALL REGISTER_DOCUMENT(?, ?, ?, ?, ?, ?);", "sisisi", 
+				$path, $creador, $nombre, $fechaCreacion, $descripcion, $visible
+			);
+		}
+		
+		public static function registrar_sueldo(string $path, int $creador, string $nombre, int $fechaCreacion, int $recipiente) : bool {
+			if(!repo::check_valid_file_info("Sueldo", $path, $creador, $nombre, $fechaCreacion, $recipiente)) return false;
+
+			return controladorConexion::get()->query(
+				"CALL REGISTER_PAYMENT(?, ?, ?, ?, ?);", "sisii", 
+				$path, $creador, $nombre, $fechaCreacion, $recipiente
+			);
+		}
+
+		public static function get_file_from_path(string $path) {
+			if(!Archivo::checkFilePathIntegrity($path)) {
+				throw new \Exception("FAILED_TO_GET_FILE_INVALID_PATH");
+				return false;
+			}
+
+			return controladorConexion::get()->fetch_query(
+				"CALL GET_FILE_DATA(?);", "s", 
+				$path
+			);			
 		}
 }
 

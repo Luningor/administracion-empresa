@@ -6,8 +6,8 @@ use LBBAS\app\core\logger as logger;
 use LBBAS\config\config as config;
 
 class controladorConexion {
-	static private ?controladorConexion $instance = NULL;
-	private ?\mysqli					$connection;
+	static private controladorConexion $instance;
+	private ?\mysqli				   $connection;
 
 	/// @Constructor
 	public function __construct() {
